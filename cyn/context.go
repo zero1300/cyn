@@ -16,6 +16,7 @@ type Context struct {
 	Method     string
 	Path       string
 	StatusCode int
+	Params     map[string]string
 }
 
 func NewContext(writer http.ResponseWriter, req *http.Request) *Context {
@@ -27,6 +28,11 @@ func NewContext(writer http.ResponseWriter, req *http.Request) *Context {
 // PostForm 获得Post请求的参数
 func (c Context) PostForm(key string) string {
 	return c.Req.FormValue(key)
+}
+
+func (c *Context) Param(key string) string {
+	value, _ := c.Params[key]
+	return value
 }
 
 // PostBody 获得Post请求的Body

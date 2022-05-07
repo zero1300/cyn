@@ -22,5 +22,13 @@ func main() {
 	engine.POST("/postSomething", func(context *cyn.Context) {
 		context.String(200, context.PostBody())
 	})
+
+	engine.GET("hello/:name", func(context *cyn.Context) {
+		context.String(200, "hello, i got you name: ", context.Param("name"))
+	})
+
+	engine.GET("/assets/*filename", func(context *cyn.Context) {
+		context.String(200, "ok, i got you filename: ", context.Param("filename"))
+	})
 	engine.Run(":8848")
 }
