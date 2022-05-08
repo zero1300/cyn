@@ -1,34 +1,41 @@
 package main
 
 import (
+	"fmt"
 	"gin-play/cyn"
+	"net/http"
 )
 
 func main() {
 	engine := cyn.New()
-	engine.GET("/", func(c *cyn.Context) {
-		c.HTML(200, "<h1>This is the index</h1>")
+	engine.GET("/index", func(context *cyn.Context) {
+		context.HTML(200, "<h1>Index Page</h1>")
 	})
-	engine.GET("/hello", func(c *cyn.Context) {
-		c.String(200, "hello")
-	})
-	engine.POST("/message", func(c *cyn.Context) {
-		c.JSON(200, cyn.H{
-			"name": c.PostForm("name"),
-			"age":  c.PostForm("age"),
+	v1 := engine.Group("/v1")
+	{
+		v1.GET("/", func(context *cyn.Context) {
+			context.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
 		})
-	})
+		v1.GET("/hello", func(c *cyn.Context) {
+			// expect /hello?name=geektutu
+			c.String(http.StatusOK, fmt.Sprintf("hello %s, you're at %s\n", c.Query("name"), c.Path))
+		})
+	}
 
-	engine.POST("/postSomething", func(context *cyn.Context) {
-		context.String(200, context.PostBody())
-	})
+	v2 := engine.Group("/v2")
+	{
+		v2.GET("/hello/:name", func(c *cyn.Context) {
+			// expect /hello/geektutu
+			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
+		})
+		v2.POST("/login", func(c *cyn.Context) {
+			c.JSON(http.StatusOK, cyn.H{
+				"username": c.PostForm("username"),
+				"password": c.PostForm("password"),
+			})
+		})
 
-	engine.GET("hello/:name", func(context *cyn.Context) {
-		context.String(200, "hello, i got you name: ", context.Param("name"))
-	})
+	}
 
-	engine.GET("/assets/*filename", func(context *cyn.Context) {
-		context.String(200, "ok, i got you filename: ", context.Param("filename"))
-	})
 	engine.Run(":8848")
 }
