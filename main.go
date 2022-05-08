@@ -3,39 +3,37 @@ package main
 import (
 	"fmt"
 	"gin-play/cyn"
+	"log"
 	"net/http"
+	"time"
 )
 
-func main() {
-	engine := cyn.New()
-	engine.GET("/index", func(context *cyn.Context) {
-		context.HTML(200, "<h1>Index Page</h1>")
-	})
-	v1 := engine.Group("/v1")
-	{
-		v1.GET("/", func(context *cyn.Context) {
-			context.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
-		})
-		v1.GET("/hello", func(c *cyn.Context) {
-			// expect /hello?name=geektutu
-			c.String(http.StatusOK, fmt.Sprintf("hello %s, you're at %s\n", c.Query("name"), c.Path))
-		})
+func onlyForV2() cyn.HandleFunc {
+	return func(c *cyn.Context) {
+		// Start timer
+		t := time.Now()
+		// if a server error occurred
+		//c.Fail(500, "Internal Server Error")
+		// Calculate resolution time
+		log.Printf("[%d] %s in %v for group v2", c.StatusCode, c.Req.RequestURI, time.Since(t))
 	}
+}
 
-	v2 := engine.Group("/v2")
+func main() {
+	r := cyn.New()
+	r.Use(cyn.Logger()) // global midlleware
+	r.GET("/", func(c *cyn.Context) {
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	})
+
+	v2 := r.Group("/v2")
+	v2.Use(onlyForV2()) // v2 group middleware
 	{
 		v2.GET("/hello/:name", func(c *cyn.Context) {
 			// expect /hello/geektutu
-			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
+			c.String(http.StatusOK, fmt.Sprintf("hello %s, you're at %s\n", c.Param("name"), c.Path))
 		})
-		v2.POST("/login", func(c *cyn.Context) {
-			c.JSON(http.StatusOK, cyn.H{
-				"username": c.PostForm("username"),
-				"password": c.PostForm("password"),
-			})
-		})
-
 	}
 
-	engine.Run(":8848")
+	r.Run(":8848")
 }

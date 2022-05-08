@@ -3,6 +3,7 @@ package cyn
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 type HandleFunc func(*Context)
@@ -31,7 +32,14 @@ type Engine struct {
 }
 
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	var middlewares []HandleFunc
+	for _, group := range e.groups {
+		if strings.HasPrefix(r.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
+		}
+	}
 	c := NewContext(w, r)
+	c.handlers = middlewares
 	e.router.handle(c)
 }
 
@@ -55,6 +63,11 @@ func (g *RouteGroup) POST(path string, handleFunction HandleFunc) {
 
 func (g *RouteGroup) GET(path string, handleFunction HandleFunc) {
 	g.addRoute("GET", path, handleFunction)
+}
+
+// Use is defined to add middleware to the group
+func (g *RouteGroup) Use(middlewares ...HandleFunc) {
+	g.middlewares = append(g.middlewares, middlewares...)
 }
 
 func (e *Engine) Run(addr string) {

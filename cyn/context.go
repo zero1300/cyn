@@ -17,10 +17,24 @@ type Context struct {
 	Path       string
 	StatusCode int
 	Params     map[string]string
+	// handlers middleware
+	handlers []HandleFunc
+	// index for operation handles
+	index int
 }
 
 func NewContext(writer http.ResponseWriter, req *http.Request) *Context {
-	return &Context{Writer: writer, Req: req, Method: req.Method, Path: req.URL.Path}
+	return &Context{Writer: writer, Req: req, Method: req.Method, Path: req.URL.Path, index: -1}
+}
+
+/* middleware function */
+
+func (c *Context) Next() {
+	c.index++
+	s := len(c.handlers)
+	for ; c.index < s; c.index++ {
+		c.handlers[c.index](c)
+	}
 }
 
 /* --- 获得参数的方法 --- */
