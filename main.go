@@ -30,7 +30,6 @@ func main() {
 	v2.Use(onlyForV2()) // v2 group middleware
 	{
 		v2.GET("/hello/:name", func(c *cyn.Context) {
-			// expect /hello/geektutu
 			c.String(http.StatusOK, fmt.Sprintf("hello %s, you're at %s\n", c.Param("name"), c.Path))
 		})
 	}
